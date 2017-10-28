@@ -1,0 +1,7 @@
+[package]
+name = "kenmisc"
+version = "0.1.0"
+authors = ["Ken Reed <kenakioreed@gmail.com>"]
+
+[dependencies]
+rand = "0.3" 
