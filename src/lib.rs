@@ -13,16 +13,19 @@ pub struct PreVec<T>{
     vec:Vec<* mut T>
 }
 impl<T> PreVec<T>{
+	#[inline(always)]
     pub fn new()->PreVec<T>{
         PreVec{vec:Vec::new()}
     }
 
     ///Clears the vec and returns a mutable reference to a vec.
+    #[inline(always)]
     pub fn get_empty<'a>(&'a mut self)->&mut Vec<&'a mut T>{
         self.vec.clear();
         unsafe{std::mem::transmute(&mut self.vec)}
     }
     ///Clears the vec and returns a mutable reference to a vec.
+    #[inline(always)]
     pub fn get_empty_const<'a>(&'a mut self)->&mut Vec<&'a T>{
         self.vec.clear();
         unsafe{std::mem::transmute(&mut self.vec)}
@@ -113,6 +116,131 @@ pub fn join<'a,T>(first: &'a [T],second:&'a [T])->&'a [T]{
 
 }
 
+
+
+pub mod log{
+
+    ///Interface for this package to log to.
+    pub mod log{
+        pub enum Typ {
+            Rebal,
+            Query,
+            RebalQuery,
+            BotUpdate,
+            ContDyn,
+            Graphic,
+            Total,
+        }
+
+        pub trait LogT{
+            fn write(&mut self,e:Typ,val:f64);
+            fn newline(&mut self);
+        }    
+    }
+
+
+    pub mod concrete{
+        use std::fs::File;
+        use std::io::Write;
+
+        use super::*;
+
+        pub struct MLog{
+            logger:Logger,
+            arr:[f64;7]
+        }
+
+        impl MLog{
+            pub fn new(str:&'static str)->MLog{
+                MLog{logger:Logger::with_names(str,&["rebalance","query","rebal_query","bot update","cont dyn","graphic","total"]),arr:[0.0;7]}
+            }
+        }
+
+        impl log::LogT for MLog{
+            
+            fn write(&mut self,e:log::Typ,val:f64){
+                self.arr[e as usize]=val;
+            }
+
+            fn newline(&mut self){
+                self.logger.write_data(&self.arr);
+            }
+        }
+
+
+        pub struct MLogDummy{
+        }
+
+        impl log::LogT for MLogDummy{
+            
+            fn write(&mut self,_e:log::Typ,_val:f64){
+            }
+
+            fn newline(&mut self){
+            }
+        }
+
+
+
+
+
+
+        pub struct Logger{
+            file:File,
+            counter:usize
+        }
+        impl Logger{
+
+            pub fn new(str:&'static str)->Logger{
+                
+                let file = File::create(str).unwrap();
+               
+                /*
+                write!(file,"Iteration,").unwrap();
+                for k in names{
+                    write!(file,"{},",k).unwrap();    
+                }
+                
+                writeln!(file,"").unwrap();
+                */
+                Logger{file:file,counter:0}
+            }
+
+            pub fn with_names(str:&'static str,names:&[&'static str])->Logger{
+                
+                let mut file = File::create(str).unwrap();
+               
+                write!(file,"Iteration,").unwrap();
+                for k in names{
+                    write!(file,"{},",k).unwrap();    
+                }
+                writeln!(file,"").unwrap();
+                Logger{file:file,counter:0}
+            }
+
+            pub fn write_str(&mut self,strf:&'static str,slice:&[String]){
+
+                write!(self.file,"{},",strf).unwrap();
+                for k in slice{
+                    write!(self.file,"{},",k).unwrap();    
+                }
+                writeln!(self.file,"").unwrap();
+                
+            }
+            pub fn write_data(&mut self,slice:&[f64]){
+                
+                write!(self.file,"{},",self.counter).unwrap();
+                for k in slice{
+                    write!(self.file,"{},",k).unwrap();    
+                }
+                writeln!(self.file,"").unwrap();
+                self.counter+=1;
+                
+            }
+        }
+
+    }
+}
 
 
 
