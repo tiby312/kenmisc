@@ -1,25 +1,4 @@
-
-
-unsafe impl<T:Send> std::marker::Send for PreVec<T>{}
-
-///An vec api to avoid excessive dynamic allocation by reusing a Vec
-pub struct PreVec<T>{
-    vec:Vec<* mut T>
-}
-impl<T> PreVec<T>{
-	#[inline(always)]
-    pub fn new()->PreVec<T>{
-        PreVec{vec:Vec::new()}
-    }
-
-    ///Clears the vec and returns a mutable reference to a vec.
-    #[inline(always)]
-    pub fn get_empty_vec_mut<'a>(&'a mut self)->&mut Vec<&'a mut T>{
-        self.vec.clear();
-        let v:&mut Vec<*mut T> = &mut self.vec;
-        unsafe{std::mem::transmute(v)}
-    }
-}
+extern crate smallvec;
 
 
 
@@ -132,10 +111,11 @@ pub mod log{
             writeln!(self.file,"").unwrap();
             
         }
-        pub fn write_data(&mut self,slice:&[f64]){
+
+        pub fn write_data<I:Iterator<Item=f64>>(&mut self,stuff:I){
             
             write!(self.file,"{},",self.counter).unwrap();
-            for k in slice{
+            for k in stuff{
                 write!(self.file,"{},",k).unwrap();    
             }
             writeln!(self.file,"").unwrap();
